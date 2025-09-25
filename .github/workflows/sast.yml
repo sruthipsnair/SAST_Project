@@ -44,22 +44,28 @@ jobs:
       - name: Merge SARIF files (if present)
         run: |
           python3 - <<'PY'
-import json,os
-out='sast-reports/merged.sarif'
-runs=[]
-for f in ['sast-reports/cppcheck.sarif','sast-reports/clang-tidy.sarif','sast-reports/clang-analyze.sarif']:
-  if os.path.exists(f):
-    try:
-      j=json.load(open(f))
-      runs.extend(j.get('runs',[]))
-    except Exception as e:
-      print('skip',f,e)
-if runs:
-  json.dump({'version':'2.1.0','runs':runs},open(out,'w'),indent=2)
-  print('merged ->',out)
-else:
-  print('no sarif files to merge')
-PY
+          import json, os, sys
+          out = 'sast-reports/merged.sarif'
+          runs = []
+          files = [
+              'sast-reports/cppcheck.sarif',
+              'sast-reports/clang-tidy.sarif',
+              'sast-reports/clang-analyze.sarif'
+          ]
+          for f in files:
+              if os.path.exists(f):
+                  try:
+                      j = json.load(open(f))
+                      runs.extend(j.get('runs', []))
+                  except Exception as e:
+                      print('skip', f, e, file=sys.stderr)
+          if runs:
+              json.dump({'version': '2.1.0', 'runs': runs}, open(out, 'w'), indent=2)
+              print('merged ->', out)
+          else:
+              print('no sarif files to merge')
+          PY
+
 
       - name: Upload textual reports (artifact)
         uses: actions/upload-artifact@v4
