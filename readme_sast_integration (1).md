@@ -147,6 +147,23 @@ A sample workflow (`.github/workflows/sast.yml`) is provided as an example. It:
 - If cppcheck scans build files → use `--file-list` excluding `build/`.
 - If clang-tidy misses include paths → ensure `build/compile_commands.json` exists and run with `-p build`.
 
+
+## Handover Checklist
+
+- [ ] Repo code present: `main.c`, `utils.c`, `CMakeLists.txt`
+- [ ] SAST scripts: `run_all_sast.sh`, `demo_run_sast.sh`
+- [ ] Converters: `sast-reports/*.py`
+- [ ] VS Code tasks: `.vscode/tasks.json`
+- [ ] CI workflow: `.github/workflows/sast.yml`
+- [ ] Sample reports: `sample-reports/` (contains `clang-tidy.txt`, `cppcheck.xml`, `merged.sarif`)
+- How to verify:
+  1. Clone repo (or view on GitHub)
+  2. Open in VS Code (Remote - WSL)
+  3. Run `cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and `cmake --build build`
+  4. Run `./demo_run_sast.sh` and inspect `sast-reports/` (or download CI artifact)
+  5. Check GitHub Actions -> click the latest run -> Artifacts -> download `sast-reports`
+  6. Check Security -> Code scanning -> Alerts (if SARIF upload produced alerts)
+
 ---
 
 
