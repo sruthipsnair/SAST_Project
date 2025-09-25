@@ -1,0 +1,70 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "cppcheck",
+          "informationUri": "https://cppcheck.sourceforge.io/",
+          "rules": [
+            {
+              "id": "checkersReport",
+              "shortDescription": {
+                "text": "checkersReport"
+              },
+              "fullDescription": {
+                "text": "Active checkers: 113/592 (use --checkers-report=<filename> to see details)"
+              },
+              "helpUri": null,
+              "properties": {
+                "severity": "information"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "checkersReport",
+          "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "Active checkers: 113/592 (use --checkers-report=<filename> to see details)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "<nofile>",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {}
+              }
+            }
+          ],
+          "properties": {
+            "cppcheck_severity": "information"
+          }
+        }
+      ]
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "clang-tidy",
+          "informationUri": "https://clang.llvm.org/extra/clang-tidy/",
+          "rules": []
+        }
+      },
+      "results": []
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "clang-analyzer"
+        }
+      },
+      "results": []
+    }
+  ]
+}
