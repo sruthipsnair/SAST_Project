@@ -63,9 +63,18 @@ jobs:
               json.dump({'version': '2.1.0', 'runs': runs}, open(out, 'w'), indent=2)
               print('merged ->', out)
           else:
+              # create an empty SARIF so upload doesn't fail if you prefer
               print('no sarif files to merge')
           PY
 
+      - name: Check merged SARIF exists
+        id: sarif-check
+        run: |
+          if [ -f "sast-reports/merged.sarif" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload textual reports (artifact)
         uses: actions/upload-artifact@v4
@@ -73,21 +82,8 @@ jobs:
           name: sast-reports
           path: sast-reports/
 
-      - name: Upload merged SARIF (only if exists)
-        if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'push') }}
-        run: |
-          if [ -f "sast-reports/merged.sarif" ]; then
-            echo "Uploading sast-reports/merged.sarif"
-            # Use upload-sarif v3
-            gh_token="${{ secrets.GITHUB_TOKEN }}"
-            # The upload action below will use the built-in GITHUB_TOKEN automatically; we just ensure file exists.
-            echo "found merged.sarif"
-          else
-            echo "No merged.sarif to upload; skipping SARIF upload"
-            exit 0
-          fi
-      - name: Upload SARIF to GitHub (v3)
-        if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'push') && (exists('sast-reports/merged.sarif') ) }}
+      - name: Upload merged SARIF to GitHub (only if merged.sarif exists)
+        if: ${{ steps.sarif-check.outputs.exists == 'true' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sast-reports/merged.sarif
