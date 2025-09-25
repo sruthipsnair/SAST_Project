@@ -1,0 +1,9 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*
+HeaderFilterRegex: '^/root/projects/my_sast_project/.*'
+WarningsAsErrors: ''
+

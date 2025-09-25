@@ -1,0 +1,24 @@
+# Build and editor files
+/build/
+/sast-reports/
+/.vscode/
+/*.sarf
+*.o
+*.a
+*.so
+*.exe
+*.dll
+*.log
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python envs
+venv/
+env/
+
+# Temporary files
+*~ 
+*.swp
