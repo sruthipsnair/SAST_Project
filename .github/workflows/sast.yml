@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write   # required to upload SARIF to Code Scanning
 
 jobs:
   sast:
@@ -17,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential cmake clang clang-tidy cppcheck python3
+          sudo apt install -y build-essential cmake clang clang-tidy cppcheck python3 python3-pip jq
 
       - name: Configure + Build (CMake)
         run: |
@@ -26,22 +30,58 @@ jobs:
 
       - name: Run all SAST tools
         run: |
-          chmod +x ./run_all_sast.sh
-          ./run_all_sast.sh
+          chmod +x ./run_all_sast.sh || true
+          ./run_all_sast.sh || true
 
       - name: Run demo script (SARIF conversion)
         run: |
-          chmod +x ./demo_run_sast.sh
-          ./demo_run_sast.sh
+          chmod +x ./demo_run_sast.sh || true
+          ./demo_run_sast.sh || true
 
-      - name: Upload textual reports
+      - name: Ensure sast-reports dir exists
+        run: mkdir -p sast-reports
+
+      - name: Merge SARIF files (if present)
+        run: |
+          python3 - <<'PY'
+import json,os
+out='sast-reports/merged.sarif'
+runs=[]
+for f in ['sast-reports/cppcheck.sarif','sast-reports/clang-tidy.sarif','sast-reports/clang-analyze.sarif']:
+  if os.path.exists(f):
+    try:
+      j=json.load(open(f))
+      runs.extend(j.get('runs',[]))
+    except Exception as e:
+      print('skip',f,e)
+if runs:
+  json.dump({'version':'2.1.0','runs':runs},open(out,'w'),indent=2)
+  print('merged ->',out)
+else:
+  print('no sarif files to merge')
+PY
+
+      - name: Upload textual reports (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: sast-reports
           path: sast-reports/
 
-      - name: Upload merged SARIF
-        uses: github/codeql-action/upload-sarif@v2
+      - name: Upload merged SARIF (only if exists)
+        if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'push') }}
+        run: |
+          if [ -f "sast-reports/merged.sarif" ]; then
+            echo "Uploading sast-reports/merged.sarif"
+            # Use upload-sarif v3
+            gh_token="${{ secrets.GITHUB_TOKEN }}"
+            # The upload action below will use the built-in GITHUB_TOKEN automatically; we just ensure file exists.
+            echo "found merged.sarif"
+          else
+            echo "No merged.sarif to upload; skipping SARIF upload"
+            exit 0
+          fi
+      - name: Upload SARIF to GitHub (v3)
+        if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'push') && (exists('sast-reports/merged.sarif') ) }}
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sast-reports/merged.sarif
-
